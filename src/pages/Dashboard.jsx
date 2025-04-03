@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import Logo from '../components/Logo';
 import MenuSection from '../components/MenuSection';
 import UserInfo from '../components/UserInfo';
+import AddProductForm from '../components/AddProductForm';
+import { FaBars, FaTimes, FaHome, FaBox, FaChartBar, FaQuestionCircle, FaCog, FaUserPlus, FaPlus, FaFileAlt, FaBuilding } from 'react-icons/fa';
 
 const Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState('Inicio');
@@ -22,7 +24,7 @@ const Dashboard = () => {
       case 'Crear colaboradores':
         return <div>Formulario para crear colaboradores</div>;
       case 'Añadir Producto':
-        return <div>Formulario para añadir productos</div>;
+        return <AddProductForm />;
       case 'Crear orden':
         return <div>Formulario para crear órdenes</div>;
       case 'Añadir proveedor':
@@ -39,20 +41,7 @@ const Dashboard = () => {
         className='md:hidden bg-[#DAEBFE] text-white p-2 m-2 rounded shadow-md'
         onClick={() => setIsMenuOpen(!isMenuOpen)}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d={isMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'}
-          />
-        </svg>
+        {isMenuOpen ? <FaTimes className="h-12 w-12" /> : <FaBars className="h-12 w-12" />}
       </button>
 
       {/* Menú lateral */}
@@ -62,12 +51,15 @@ const Dashboard = () => {
         } transition-transform duration-300 ease-in-out md:translate-x-0`}
       >
         <Logo />
+        <div className="w-full mt-4 flex flex-col items-start">
+          <UserInfo username="Juan Pérez" />
+        </div>
         <MenuSection
           title="General"
           options={[
-            { icon: '🏠', text: 'Inicio' },
-            { icon: '📦', text: 'Inventario' },
-            { icon: '📊', text: 'Reportes' },
+            { icon: <FaHome />, text: 'Inicio' },
+            { icon: <FaBox />, text: 'Inventario' },
+            { icon: <FaChartBar />, text: 'Reportes' },
           ]}
           onOptionClick={(option) => {
             setSelectedOption(option);
@@ -77,8 +69,8 @@ const Dashboard = () => {
         <MenuSection
           title="Otros"
           options={[
-            { icon: '❓', text: 'Ayuda' },
-            { icon: '⚙️', text: 'Configuración' },
+            { icon: <FaQuestionCircle />, text: 'Ayuda' },
+            { icon: <FaCog />, text: 'Configuración' },
           ]}
           onOptionClick={(option) => {
             setSelectedOption(option);
@@ -88,10 +80,10 @@ const Dashboard = () => {
         <MenuSection
           title="Acciones rápidas"
           options={[
-            { icon: '👤', text: 'Crear colaboradores' },
-            { icon: '➕', text: 'Añadir Producto' },
-            { icon: '📑', text: 'Crear orden' },
-            { icon: '🏢', text: 'Añadir proveedor' },
+            { icon: <FaUserPlus />, text: 'Crear colaboradores' },
+            { icon: <FaPlus />, text: 'Añadir Producto' },
+            { icon: <FaFileAlt />, text: 'Crear orden' },
+            { icon: <FaBuilding />, text: 'Añadir proveedor' },
           ]}
           onOptionClick={(option) => {
             setSelectedOption(option);
@@ -102,11 +94,14 @@ const Dashboard = () => {
 
       {/* Contenido principal */}
       <main className='flex-1 flex flex-col'>
-        <header className='bg-white shadow-md p-4 flex justify-between items-center'>
+        <header className='bg-[#DBECFE] shadow-md p-8 flex justify-between items-center'>
           <h1 className='text-lg font-bold'>Panel de Control</h1>
-          <UserInfo username="Juan Pérez" />
         </header>
-        <div className='p-4 flex-1 bg-[#F3F4F6]'>{renderContent()}</div>
+        <div className='p-4 flex-1 bg-[#DBECFE] flex justify-center items-start'>
+          <div className="bg-[white] w-full max-w-4xl p-6 rounded-lg shadow-md">
+            {renderContent()}
+          </div>
+        </div>
       </main>
     </div>
   );
