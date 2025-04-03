@@ -2,6 +2,7 @@
     import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
     import Login from './pages/login'
     import { Toaster } from 'react-hot-toast';
+import Dashboard from './pages/DashBoard';
     
     function App() {
       return (
@@ -18,6 +19,7 @@
 
             {/* Ruta para el inicio de sesión */}
             <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </Router>
       )
