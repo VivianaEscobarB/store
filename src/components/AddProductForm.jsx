@@ -49,9 +49,8 @@ const AddProductForm = () => {
             name="description"
             value={formData.description}
             onChange={handleChange}
-            className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none placeholder:text-sm"
+            className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none placeholder:text-sm h-[48px]"
             placeholder="Descripción del producto"
-            rows="4"
             required
           />
         </div>
