@@ -4,6 +4,7 @@ import Login from './pages/login'
 import { Toaster } from 'react-hot-toast';
 import Dashboard from './pages/DashBoard';
 import RecuperarContraseña from './pages/recuperarContraseña';
+import CambiarContraseña from './pages/cambiarContraseña';
 import Registrarse from './pages/registrarse';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/recuperarContraseña" element={<RecuperarContraseña />} />
+        <Route path="/cambiarContraseña" element={<CambiarContraseña />} />
         <Route path="/registrarse" element={<Registrarse />} />
       </Routes>
     </Router>
