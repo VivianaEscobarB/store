@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
+import axios from 'axios'; // Importar axios
 import logo from '../assets/imagenLogin.png'; // Importar la imagen
 
 const FormularioRegistrarse = () => {
@@ -11,7 +12,6 @@ const FormularioRegistrarse = () => {
     const [telefono, setTelefono] = useState('');
     const [correo, setCorreo] = useState('');
     const [contrasena, setContrasena] = useState('');
-    const [confirmarContrasena, setConfirmarContrasena] = useState('');
     const navigate = useNavigate();
 
 
@@ -21,15 +21,31 @@ const FormularioRegistrarse = () => {
     const handleTelefonoChange = (e) => setTelefono(e.target.value);
     const handleCorreoChange = (e) => setCorreo(e.target.value);
     const handleContrasenaChange = (e) => setContrasena(e.target.value);
-    const handleConfirmarContrasenaChange = (e) => setConfirmarContrasena(e.target.value);
 
-    const isButtonEnabled = nombres.trim() !== '' && apellidos.trim() !== '' && fechaNacimiento.trim() !== '' && telefono.trim() !== '' && correo.trim() !== '' && contrasena.trim() !== '' && contrasena === confirmarContrasena;
+    const isButtonEnabled = nombres.trim() !== '' && apellidos.trim() !== '' && fechaNacimiento.trim() !== '' && telefono.trim() !== '' && correo.trim() !== '' && contrasena.trim() !== '';
 
     const registrarse = async () => {
         if (!isButtonEnabled) return;
 
+        // Separar nombres y apellidos en variables diferentes
+        const [primerNombre, segundoNombre = ''] = nombres.trim().split(' ');
+        const [primerApellido, segundoApellido = ''] = apellidos.trim().split(' ');
+
         try {
-            // Aquí se realizaría la llamada a la API para registrar al usuario
+            // Enviar la información al servidor usando axios
+            const response = await axios.post('https://tu-servidor.com/api/registro', {
+                primerNombre,
+                segundoNombre,
+                primerApellido,
+                segundoApellido,
+                fechaNacimiento,
+                telefono,
+                correo,
+                contrasena,
+            });
+
+            console.log('Respuesta del servidor:', response.data);
+
             Swal.fire({
                 title: "Registro exitoso",
                 text: "Ahora puedes iniciar sesión",
@@ -37,7 +53,11 @@ const FormularioRegistrarse = () => {
                 confirmButtonText: "Aceptar"
             }).then(() => navigate("/"));
         } catch (error) {
-            Swal.fire({ title: "Error", text: "No se pudo completar el registro", icon: "error" });
+            Swal.fire({ 
+                title: "Error", 
+                text: error.response?.data?.message || "No se pudo completar el registro", 
+                icon: "error" 
+            });
         }
     };
 
@@ -76,8 +96,8 @@ const FormularioRegistrarse = () => {
                         <input type="password" placeholder="Contraseña" className="w-full p-1.5 border border-gray-400 rounded-full bg-[#F9F9F9] placeholder:font-normal font-normal" value={contrasena} onChange={handleContrasenaChange} />
                     </div>
                     <div className="flex w-3/4 gap-2 mt-2">
-                        <button className={`w-1/2 px-2 py-1.5 rounded-full text-white ${isButtonEnabled ? 'bg-[#9ECAF9] hover:bg-blue-600' : 'bg-gray-400 cursor-not-allowed'}`} onClick={registrarse} disabled={!isButtonEnabled}>Registrarse</button>
-                        <button className="w-1/2 px-2 py-1.5 rounded-full text-gray-700 bg-white border border-gray-300 hover:bg-gray-100" onClick={() => navigate(-1)}>Regresar</button>
+                        <button className={`w-1/2 px-2 py-1.5 rounded-full text-black ${isButtonEnabled ? 'bg-[#DBECFE] hover:bg-[#B0D4F1]' : 'bg-gray-400 cursor-not-allowed'}`} onClick={registrarse} disabled={!isButtonEnabled}>Registrarse</button>
+                        <button className="w-1/2 px-2 py-1.5 rounded-full text-black bg-[#FFFFFF] border border-gray-300 hover:bg-gray-200" onClick={() => navigate(-1)}>Regresar</button>
                     </div>
                 </div>
         </div>
