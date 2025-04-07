@@ -65,7 +65,7 @@ const FormularioLogin = () => {
 
                     <div className="flex gap-4">
                         <button className={`px-6 py-2 rounded text-black ${isButtonEnabled ? 'bg-[#9ECAF9] hover:bg-[#7FA8E9]' : 'bg-gray-400 cursor-not-allowed'}`} onClick={login} disabled={!isButtonEnabled}>Ingresar</button>
-                        <button className="px-6 py-2 border rounded">Registrarse</button>
+                        <button className="px-6 py-2 border rounded" onClick={() => navigate("/registrarse")}>Registrarse</button>
                     </div>
                 </div>
 

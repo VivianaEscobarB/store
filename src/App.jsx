@@ -4,7 +4,8 @@ import Login from './pages/login'
 import { Toaster } from 'react-hot-toast';
 import Dashboard from './pages/DashBoard';
 import RecuperarContraseña from './pages/recuperarContraseña';
-    
+import Registrarse from './pages/registrarse';
+
 function App() {
   return (
     // Se utiliza el componente Router para manejar la navegación en la aplicación
@@ -21,6 +22,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/recuperarContraseña" element={<RecuperarContraseña />} />
+        <Route path="/registrarse" element={<Registrarse />} />
       </Routes>
     </Router>
   )
