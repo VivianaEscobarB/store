@@ -1,21 +1,11 @@
 import React, { useState } from 'react';
-<<<<<<< HEAD
-=======
 import ProductTable from './ProductTable'; // Importa el nuevo componente
->>>>>>> registro
 
 const AddProductForm = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     unitPrice: '',
-<<<<<<< HEAD
-    unitQuantity: '',
-    totalQuantity: '',
-    date: '',
-  });
-
-=======
     quantity: '', // Cambiado de unitQuantity a quantity
     total: '', // Cambiado de totalQuantity a total
     date: '',
@@ -25,7 +15,6 @@ const AddProductForm = () => {
   const [isEditing, setIsEditing] = useState(false); // Nuevo estado para saber si se está editando
   const [editIndex, setEditIndex] = useState(null); // Índice del producto que se está editando
 
->>>>>>> registro
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -33,18 +22,6 @@ const AddProductForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-<<<<<<< HEAD
-    console.log('Producto añadido:', formData);
-    // Aquí puedes manejar el envío del formulario, como enviarlo a una API
-  };
-
-  return (
-   <>
-      <h2 className="text-lg font-bold text-gray-700 mb-4">Añadir Producto</h2>
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col md:flex-row flex-wrap gap-6 "
-=======
     if (isEditing) {
       // Actualiza el producto existente
       const updatedProducts = [...products];
@@ -75,7 +52,6 @@ const AddProductForm = () => {
       <form
         onSubmit={handleSubmit}
         className="flex flex-col md:flex-row flex-wrap gap-6"
->>>>>>> registro
       >
         <div className="flex-1 min-w-[250px]">
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre</label>
@@ -119,17 +95,6 @@ const AddProductForm = () => {
         </div>
 
         <div className="flex-1 min-w-[250px]">
-<<<<<<< HEAD
-          <label htmlFor="unitQuantity" className="block text-sm font-medium text-gray-700">Cantidad unitaria</label>
-          <input
-            type="number"
-            id="unitQuantity"
-            name="unitQuantity"
-            value={formData.unitQuantity}
-            onChange={handleChange}
-            className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Cantidad unitaria"
-=======
           <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">Cantidad</label>
           <input
             type="number"
@@ -139,23 +104,11 @@ const AddProductForm = () => {
             onChange={handleChange}
             className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             placeholder="Cantidad"
->>>>>>> registro
             required
           />
         </div>
 
         <div className="flex-1 min-w-[250px]">
-<<<<<<< HEAD
-          <label htmlFor="totalQuantity" className="block text-sm font-medium text-gray-700">Cantidad total</label>
-          <input
-            type="number"
-            id="totalQuantity"
-            name="totalQuantity"
-            value={formData.totalQuantity}
-            onChange={handleChange}
-            className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Cantidad total"
-=======
           <label htmlFor="total" className="block text-sm font-medium text-gray-700">Total</label>
           <input
             type="number"
@@ -165,7 +118,6 @@ const AddProductForm = () => {
             onChange={handleChange}
             className="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             placeholder="Total"
->>>>>>> registro
             required
           />
         </div>
@@ -186,15 +138,6 @@ const AddProductForm = () => {
         <div className="flex items-end min-w-[250px]">
           <button
             type="submit"
-<<<<<<< HEAD
-            className="bg-[#D1BBFF] text-white py-3 px-6 rounded-md hover:bg-[#BFA3E6] transition-colors duration-300 w-full md:w-auto cursor-pointer"
-          >
-            Añadir Producto
-          </button>
-        </div>
-      </form>
-      </>
-=======
             className={`py-3 px-6 rounded-md transition-colors duration-300 w-full md:w-auto cursor-pointer ${
               isEditing
                 ? 'bg-green-500 text-white hover:bg-green-600'
@@ -211,7 +154,6 @@ const AddProductForm = () => {
         onDeleteProduct={handleDeleteProduct}
       />
     </>
->>>>>>> registro
   );
 };
 
