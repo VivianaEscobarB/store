@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Logo from '../components/Logo';
 import MenuSection from '../components/MenuSection';
 import UserInfo from '../components/UserInfo';
 import AddProductForm from '../components/AddProductForm';
 import CreateCollaborators from '../components/CreateCollaborators'; // Importa el nuevo componente
-import { FaBars, FaTimes, FaHome, FaBox, FaChartBar, FaQuestionCircle, FaCog, FaUserPlus, FaPlus, FaFileAlt, FaBuilding } from 'react-icons/fa';
+import { FaBars, FaTimes, FaHome, FaBox, FaChartBar, FaQuestionCircle, FaCog, FaUserPlus, FaPlus, FaFileAlt, FaBuilding, FaInfo, FaFileContract, FaStore } from 'react-icons/fa';
+import ContractManagement from '../components/ContractManagement';
+import api from '../services/api';
 
 const Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState('Inicio');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await api.get('/user/profile');
+        console.log('User data:', response.data);
+        setUserData(response.data);
+      } catch (error) {
+        console.error('Error al obtener datos del usuario:', error);
+      }
+    };
+    fetchUserData();
+  }, []);
 
   const renderContent = () => {
     switch (selectedOption) {
@@ -18,6 +35,10 @@ const Dashboard = () => {
         return <div>Gestión de inventario</div>;
       case 'Reportes':
         return <div>Visualización de reportes</div>;
+      case 'Consultar movimientos':
+        return <div>Consulta de movimientos</div>;  
+      case 'Contratos':
+        return <ContractManagement/>;
       case 'Ayuda':
         return <div>Sección de ayuda</div>;
       case 'Configuración':
@@ -53,7 +74,10 @@ const Dashboard = () => {
       >
         <Logo />
         <div className="w-full mt-4 flex flex-row items-center">
-          <UserInfo username="Juan Pérez" />
+          <UserInfo 
+            username={userData?.nombre || "Usuario"} 
+            role={userData?.rol}
+          />
         </div>
         <MenuSection
           title="General"
@@ -61,6 +85,8 @@ const Dashboard = () => {
             { icon: <FaHome />, text: 'Inicio' },
             { icon: <FaBox />, text: 'Inventario' },
             { icon: <FaChartBar />, text: 'Reportes' },
+            { icon: < FaStore/>, text: 'Consultar movimientos' },
+             { icon: <FaFileAlt/>, text: 'Contratos' },
           ]}
           onOptionClick={(option) => {
             setSelectedOption(option);

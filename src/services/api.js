@@ -1,8 +1,19 @@
-import axios from "axios";
+import axios from 'axios';
 
 const api = axios.create({
-  baseURL: "https://dental-management-system-backend.onrender.com/api",
-  headers: { "Content-Type": "application/json" }
+  baseURL: 'http://localhost:5000/api',
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
+
+// Interceptor para manejar errores
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
 
 export default api;
