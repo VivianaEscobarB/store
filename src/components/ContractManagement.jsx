@@ -47,21 +47,21 @@ const ContractManagement = () => {
   };
 
   const handleSearchChange = (e) => {
-    const value = e.target.value;
+    const value = e.target.value.toLowerCase();
     setSearchTerm(value);
 
     if (value.trim() === '') {
       setFilteredWarehouses([]);
     } else {
       const filtered = warehouses.filter((warehouse) =>
-        warehouse.toLowerCase().includes(value.toLowerCase())
+        warehouse.descripcion.toLowerCase().includes(value)
       );
       setFilteredWarehouses(filtered);
     }
   };
 
   const handleSelectWarehouse = (warehouse) => {
-    setSearchTerm(warehouse);
+    setSearchTerm(warehouse.descripcion);
     setFilteredWarehouses([]);
     setSelectedWarehouse(warehouse);
     setIsWarehouseModalOpen(true);
@@ -99,28 +99,21 @@ const ContractManagement = () => {
   const fetchWarehouseRequests = async () => {
     try {
       const response = await api.get('/contratos');
-      console.log('Solicitudes recibidas:', response.data);
-      setWarehouseRequests(response.data);
+      console.log('Contratos recibidos:', response.data);
+      // Si no hay datos, inicializar como array vacío
+      setWarehouseRequests(response.data || []);
     } catch (error) {
       console.error('Error fetching requests:', error);
+      // En caso de error, inicializar como array vacío
+      setWarehouseRequests([]);
       Swal.fire('Error', 'No se pudieron cargar las solicitudes', 'error');
-    }
-  };
-
-  const fetchContratos = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/contratos');
-      setContracts(response.data);
-    } catch (error) {
-      console.error('Error al obtener contratos:', error);
-      Swal.fire('Error', 'No se pudieron cargar los contratos', 'error');
     }
   };
 
   const createContrato = async (contratoData) => {
     try {
       await axios.post('http://localhost:5000/api/contratos', contratoData);
-      await fetchContratos();
+      await fetchWarehouseRequests();
       Swal.fire('Éxito', 'Contrato creado correctamente', 'success');
     } catch (error) {
       console.error('Error al crear contrato:', error);
@@ -131,7 +124,7 @@ const ContractManagement = () => {
   const updateContrato = async (id, contratoData) => {
     try {
       await axios.put(`http://localhost:5000/api/contratos/${id}`, contratoData);
-      await fetchContratos();
+      await fetchWarehouseRequests();
       Swal.fire('Éxito', 'Contrato actualizado correctamente', 'success');
     } catch (error) {
       console.error('Error al actualizar contrato:', error);
@@ -142,17 +135,13 @@ const ContractManagement = () => {
   const deleteContrato = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/api/contratos/${id}`);
-      await fetchContratos();
+      await fetchWarehouseRequests();
       Swal.fire('Éxito', 'Contrato eliminado correctamente', 'success');
     } catch (error) {
       console.error('Error al eliminar contrato:', error);
       Swal.fire('Error', 'No se pudo eliminar el contrato', 'error');
     }
   };
-
-  useEffect(() => {
-    fetchContratos();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -203,7 +192,7 @@ const ContractManagement = () => {
   const handleWarehouseSubmit = async (e) => {
     e.preventDefault();
     const newRequest = {
-      warehouse: selectedWarehouse,
+      warehouse: selectedWarehouse.descripcion,
       productType: e.target.productType.value,
       rentalPeriod: e.target.rentalPeriod.value,
       requestDate: new Date().toLocaleDateString(),
@@ -255,7 +244,7 @@ const ContractManagement = () => {
           <FaSearch className="text-gray-500 mr-2" />
           <input
             type="text"
-            placeholder="Buscar bodega..."
+            placeholder="Buscar bodega por descripción..."
             value={searchTerm}
             onChange={handleSearchChange}
             className="flex-1 outline-none bg-transparent"
@@ -263,13 +252,16 @@ const ContractManagement = () => {
         </div>
         {filteredWarehouses.length > 0 && (
           <ul className="absolute top-full left-0 w-full max-w-md bg-[#FFFFFF] border border-gray-300 rounded-md shadow-lg mt-1 z-10">
-            {filteredWarehouses.slice(0, 5).map((warehouse, index) => (
+            {filteredWarehouses.slice(0, 5).map((warehouse) => (
               <li
-                key={index}
+                key={warehouse.id}
                 className="p-2 hover:bg-gray-100 cursor-pointer"
                 onClick={() => handleSelectWarehouse(warehouse)}
               >
-                {warehouse}
+                <div className="font-medium">{warehouse.descripcion}</div>
+                <div className="text-sm text-gray-500">
+                  Dimensiones: {warehouse.largo}x{warehouse.ancho}x{warehouse.alto}
+                </div>
               </li>
             ))}
           </ul>
@@ -277,34 +269,47 @@ const ContractManagement = () => {
       </div>
 
       <div className="mt-6">
-        <h3 className="text-xl font-bold mb-4">Bodegas Activas</h3>
+        <h3 className="text-xl font-bold mb-4">Bodegas Disponibles</h3>
         <table className="w-full border-collapse border border-gray-300">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border border-gray-300 p-2 text-left">Bodega</th>
-              <th className="border border-gray-300 p-2 text-left">Tipo de Producto</th>
-              <th className="border border-gray-300 p-2 text-left">Período de Alquiler</th>
-              <th className="border border-gray-300 p-2 text-left">Fecha de Solicitud</th>
-              <th className="border border-gray-300 p-2 text-left">Solicitante</th>
+              <th className="border border-gray-300 p-2 text-left">Descripción</th>
+              <th className="border border-gray-300 p-2 text-left">Ciudad</th>
+              <th className="border border-gray-300 p-2 text-left">Tipo</th>
+              <th className="border border-gray-300 p-2 text-left">Dimensiones</th>
+              <th className="border border-gray-300 p-2 text-left">Espacio Ocupado</th>
+              <th className="border border-gray-300 p-2 text-left">Estado</th>
+              <th className="border border-gray-300 p-2 text-left">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {warehouseRequests.filter(request => request.status === 'Activa').length > 0 ? (
-              warehouseRequests
-                .filter(request => request.status === 'Activa')
-                .map((request, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 p-2">{request.warehouse}</td>
-                    <td className="border border-gray-300 p-2">{request.productType}</td>
-                    <td className="border border-gray-300 p-2">{request.rentalPeriod}</td>
-                    <td className="border border-gray-300 p-2">{request.requestDate}</td>
-                    <td className="border border-gray-300 p-2">{request.requester}</td>
-                  </tr>
-                ))
+            {warehouses.length > 0 ? (
+              warehouses.map((bodega) => (
+                <tr key={bodega.id} className="hover:bg-gray-50">
+                  <td className="border border-gray-300 p-2">{bodega.descripcion}</td>
+                  <td className="border border-gray-300 p-2">{bodega.ciudad?.nombre || 'No especificada'}</td>
+                  <td className="border border-gray-300 p-2">{bodega.tipoBodega?.nombre || 'No especificado'}</td>
+                  <td className="border border-gray-300 p-2">
+                    {bodega.largo}x{bodega.ancho}x{bodega.alto}
+                  </td>
+                  <td className="border border-gray-300 p-2">{bodega.espacioOcupado}</td>
+                  <td className="border border-gray-300 p-2">
+                    {bodega.estadoLleno ? 'Lleno' : 'Disponible'}
+                  </td>
+                  <td className="border border-gray-300 p-2">
+                    <button
+                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                      onClick={() => handleSelectWarehouse(bodega)}
+                    >
+                      Solicitar
+                    </button>
+                  </td>
+                </tr>
+              ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center p-4 text-gray-500">
-                  No hay bodegas activas registradas.
+                <td colSpan="7" className="text-center p-4 text-gray-500">
+                  No hay bodegas disponibles.
                 </td>
               </tr>
             )}
@@ -463,7 +468,7 @@ const ContractManagement = () => {
               ✖
             </button>
             <h3 className="text-xl font-bold mb-4">Solicitar Bodega</h3>
-            <p className="mb-2"><strong>Bodega seleccionada:</strong> {selectedWarehouse}</p>
+            <p className="mb-2"><strong>Bodega seleccionada:</strong> {selectedWarehouse.descripcion}</p>
             <p className="mb-2"><strong>Fecha de solicitud:</strong> {new Date().toLocaleDateString()}</p>
             <p className="mb-4"><strong>Solicitante:</strong> {userName}</p>
             <form onSubmit={handleWarehouseSubmit} className="flex flex-col gap-4">
