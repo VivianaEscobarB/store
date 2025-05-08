@@ -88,7 +88,12 @@ const ContractManagement = () => {
   const fetchWarehouses = async () => {
     try {
       const response = await api.get('/bodegas');
-      console.log('Bodegas recibidas:', response.data);
+      console.log('Datos completos de cada bodega:', response.data.map(bodega => ({
+        id: bodega.id,
+        idCiudad: bodega.idCiudad,
+        ciudad: bodega.ciudad,
+        tipoBodega: bodega.tipoBodega
+      })));
       setWarehouses(response.data);
     } catch (error) {
       console.error('Error fetching warehouses:', error);
@@ -99,14 +104,20 @@ const ContractManagement = () => {
   const fetchWarehouseRequests = async () => {
     try {
       const response = await api.get('/contratos');
-      console.log('Contratos recibidos:', response.data);
-      // Si no hay datos, inicializar como array vacío
-      setWarehouseRequests(response.data || []);
+      if (response.data) {
+        console.log('Contratos recibidos:', response.data);
+        setWarehouseRequests(response.data);
+      } else {
+        console.log('No hay contratos disponibles');
+        setWarehouseRequests([]);
+      }
     } catch (error) {
       console.error('Error fetching requests:', error);
-      // En caso de error, inicializar como array vacío
       setWarehouseRequests([]);
-      Swal.fire('Error', 'No se pudieron cargar las solicitudes', 'error');
+      // Solo mostrar alerta si es un error real, no cuando simplemente no hay datos
+      if (error.response && error.response.status !== 404) {
+        Swal.fire('Error', 'No se pudieron cargar las solicitudes', 'error');
+      }
     }
   };
 
@@ -268,48 +279,52 @@ const ContractManagement = () => {
         )}
       </div>
 
-      <div className="mt-6">
-        <h3 className="text-xl font-bold mb-4">Bodegas Disponibles</h3>
+      <div className="mt-6 mb-8">
+        <h3 className="text-xl font-bold mb-4">Bodegas Contratadas</h3>
         <table className="w-full border-collapse border border-gray-300">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border border-gray-300 p-2 text-left">Descripción</th>
-              <th className="border border-gray-300 p-2 text-left">Ciudad</th>
-              <th className="border border-gray-300 p-2 text-left">Tipo</th>
-              <th className="border border-gray-300 p-2 text-left">Dimensiones</th>
-              <th className="border border-gray-300 p-2 text-left">Espacio Ocupado</th>
+              <th className="border border-gray-300 p-2 text-left">Bodega</th>
+              <th className="border border-gray-300 p-2 text-left">Tipo de Producto</th>
+              <th className="border border-gray-300 p-2 text-left">Fecha Inicio</th>
+              <th className="border border-gray-300 p-2 text-left">Fecha Fin</th>
               <th className="border border-gray-300 p-2 text-left">Estado</th>
               <th className="border border-gray-300 p-2 text-left">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {warehouses.length > 0 ? (
-              warehouses.map((bodega) => (
-                <tr key={bodega.id} className="hover:bg-gray-50">
-                  <td className="border border-gray-300 p-2">{bodega.descripcion}</td>
-                  <td className="border border-gray-300 p-2">{bodega.ciudad?.nombre || 'No especificada'}</td>
-                  <td className="border border-gray-300 p-2">{bodega.tipoBodega?.nombre || 'No especificado'}</td>
-                  <td className="border border-gray-300 p-2">
-                    {bodega.largo}x{bodega.ancho}x{bodega.alto}
-                  </td>
-                  <td className="border border-gray-300 p-2">{bodega.espacioOcupado}</td>
-                  <td className="border border-gray-300 p-2">
-                    {bodega.estadoLleno ? 'Lleno' : 'Disponible'}
-                  </td>
-                  <td className="border border-gray-300 p-2">
-                    <button
-                      className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                      onClick={() => handleSelectWarehouse(bodega)}
-                    >
-                      Solicitar
-                    </button>
-                  </td>
-                </tr>
-              ))
+            {warehouseRequests.filter(request => request.status === 'Aprobado').length > 0 ? (
+              warehouseRequests
+                .filter(request => request.status === 'Aprobado')
+                .map((request, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 p-2">{request.warehouse}</td>
+                    <td className="border border-gray-300 p-2">{request.productType}</td>
+                    <td className="border border-gray-300 p-2">{request.startDate || request.requestDate}</td>
+                    <td className="border border-gray-300 p-2">{request.endDate || '-'}</td>
+                    <td className={`border border-gray-300 p-2 ${getStatusStyle(request.status)}`}>
+                      {request.status}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      <button
+                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2"
+                        onClick={() => handleRowClick(request)}
+                      >
+                        Ver detalles
+                      </button>
+                      <button
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => handleDeleteRequest(index)}
+                      >
+                        <FaTrash />
+                      </button>
+                    </td>
+                  </tr>
+                ))
             ) : (
               <tr>
-                <td colSpan="7" className="text-center p-4 text-gray-500">
-                  No hay bodegas disponibles.
+                <td colSpan="6" className="text-center p-4 text-gray-500">
+                  No hay bodegas contratadas actualmente.
                 </td>
               </tr>
             )}
