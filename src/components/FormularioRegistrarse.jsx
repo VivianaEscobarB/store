@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
 import axios from 'axios'; // Importar axios
 import logo from '../assets/imagenLogin.png'; // Importar la imagen
+import api from '../services/api';
 
 const FormularioRegistrarse = () => {
 
@@ -33,7 +34,7 @@ const FormularioRegistrarse = () => {
 
         try {
             // Enviar la información al servidor usando axios
-            const response = await axios.post('https://tu-servidor.com/api/registro', {
+            const response = await api.post('/registro', {
                 primerNombre,
                 segundoNombre,
                 primerApellido,
@@ -97,7 +98,7 @@ const FormularioRegistrarse = () => {
                     </div>
                     <div className="flex w-3/4 gap-2 mt-2">
                         <button className={`w-1/2 px-2 py-1.5 rounded-full text-black ${isButtonEnabled ? 'bg-[#DBECFE] hover:bg-[#B0D4F1]' : 'bg-gray-400 cursor-not-allowed'}`} onClick={registrarse} disabled={!isButtonEnabled}>Registrarse</button>
-                        <button className="w-1/2 px-2 py-1.5 rounded-full text-black bg-[#FFFFFF] border border-gray-300 hover:bg-gray-200" onClick={() => navigate(-1)}>Regresar</button>
+                        <button className="w-1/2 px-2 py-1.5 rounded-full text-black bg-[#FFFFFF] border border-gray-300 hover:bg-gray-200 cursor-pointer" onClick={() => navigate(-1)}>Regresar</button>
                     </div>
                 </div>
         </div>

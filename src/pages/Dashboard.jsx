@@ -7,6 +7,7 @@ import AddProductForm from '../components/AddProductForm';
 import CreateCollaborators from '../components/CreateCollaborators'; // Importa el nuevo componente
 import { FaBars, FaTimes, FaHome, FaBox, FaChartBar, FaQuestionCircle, FaCog, FaUserPlus, FaPlus, FaFileAlt, FaBuilding, FaInfo, FaFileContract, FaStore } from 'react-icons/fa';
 import ContractManagement from '../components/ContractManagement';
+import MovementReport from '../components/MovementReport';
 import api from '../services/api';
 
 const Dashboard = () => {
@@ -36,21 +37,13 @@ const Dashboard = () => {
       case 'Reportes':
         return <div>Visualización de reportes</div>;
       case 'Consultar movimientos':
-        return <div>Consulta de movimientos</div>;  
+        return <MovementReport />;  
       case 'Contratos':
         return <ContractManagement/>;
-      case 'Ayuda':
-        return <div>Sección de ayuda</div>;
-      case 'Configuración':
-        return <div>Configuración del sistema</div>;
       case 'Crear colaboradores':
         return <CreateCollaborators />;
       case 'Añadir Producto':
         return <AddProductForm />;
-      case 'Crear orden':
-        return <div>Formulario para crear órdenes</div>;
-      case 'Añadir proveedor':
-        return <div>Formulario para añadir proveedores</div>;
       default:
         return <div>Seleccione una opción del menú</div>;
     }
@@ -94,23 +87,10 @@ const Dashboard = () => {
           }}
         />
         <MenuSection
-          title="Otros"
-          options={[
-            { icon: <FaQuestionCircle />, text: 'Ayuda' },
-            { icon: <FaCog />, text: 'Configuración' },
-          ]}
-          onOptionClick={(option) => {
-            setSelectedOption(option);
-            setIsMenuOpen(false); // Cierra el menú al seleccionar una opción
-          }}
-        />
-        <MenuSection
           title="Acciones rápidas"
           options={[
             { icon: <FaUserPlus />, text: 'Crear colaboradores' },
             { icon: <FaPlus />, text: 'Añadir Producto' },
-            { icon: <FaFileAlt />, text: 'Crear orden' },
-            { icon: <FaBuilding />, text: 'Añadir proveedor' },
           ]}
           onOptionClick={(option) => {
             setSelectedOption(option);

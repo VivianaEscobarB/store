@@ -45,17 +45,17 @@ const FormularioLogin = () => {
                 </div>
 
                 {/* Sección del formulario ahora está a la derecha */}
-                <div className="w-1/2 flex flex-col justify-center items-center bg-purple-200 p-10">
+                <div className="w-1/2 flex flex-col justify-center items-center bg-[#D1BBFF] p-10 border-lg rounded-xl ">
                     <h1 className="text-4xl font-bold mb-4">Store-It!</h1>
                     <p className="mb-8">waterhouse magnamente</p>
                     <div className="w-full mb-4">
                         <label className="block text-gray-700">Usuario:</label>
-                        <input type="text" className="w-full p-2 border rounded" value={usuario} onChange={handleUsuarioChange} />
+                        <input type="text" className="w-full p-2 border rounded bg-[#F9F9F9]" value={usuario} onChange={handleUsuarioChange} />
                     </div>
                     <div className="w-full mb-4">
                         <label className="block text-gray-700">Contraseña:</label>
                         <div className="relative">
-                            <input type={showPassword ? "text" : "password"} className="w-full p-2 border rounded" value={contrasena} onChange={handleContrasenaChange} />
+                            <input type={showPassword ? "text" : "password"} className="w-full p-2 border rounded bg-[#F9F9F9]" value={contrasena} onChange={handleContrasenaChange} />
                             <button type="button" className="absolute right-3 top-2" onClick={togglePasswordVisibility}>
                                 {showPassword ? <FaRegEyeSlash /> : <FaRegEye />}
                             </button>
@@ -64,8 +64,8 @@ const FormularioLogin = () => {
                     </div>
 
                     <div className="flex gap-4">
-                        <button className={`px-6 py-2 rounded text-black ${isButtonEnabled ? 'bg-[#9ECAF9] hover:bg-[#7FA8E9]' : 'bg-gray-400 cursor-not-allowed'}`} onClick={login} disabled={!isButtonEnabled}>Ingresar</button>
-                        <button className="px-6 py-2 border rounded" onClick={() => navigate("/registrarse")}>Registrarse</button>
+                        <button className={`px-6 py-2 rounded text-black ${isButtonEnabled ? 'bg-[#9ECAF9] hover:bg-gray-200  cursor-pointer hover:bg-[#7FA8E9]' : 'bg-gray-400 cursor-not-allowed'}`} onClick={login} disabled={!isButtonEnabled}>Ingresar</button>
+                        <button className="px-6 py-2 border rounded cursor-pointer bg-[#FFFFFF] hover:bg-gray-200" onClick={() => navigate("/registrarse")}>Registrarse</button>
                     </div>
                 </div>
 
