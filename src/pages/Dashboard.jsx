@@ -5,15 +5,18 @@ import MenuSection from '../components/MenuSection';
 import UserInfo from '../components/UserInfo';
 import AddProductForm from '../components/AddProductForm';
 import CreateCollaborators from '../components/CreateCollaborators'; // Importa el nuevo componente
-import { FaBars, FaTimes, FaHome, FaBox, FaChartBar, FaQuestionCircle, FaCog, FaUserPlus, FaPlus, FaFileAlt, FaBuilding, FaInfo, FaFileContract, FaStore } from 'react-icons/fa';
+import { FaBars, FaTimes, FaHome, FaBox, FaBell, FaQuestionCircle, FaCog, FaUserPlus, FaPlus, FaFileAlt, FaBuilding, FaInfo, FaFileContract, FaStore } from 'react-icons/fa';
 import ContractManagement from '../components/ContractManagement';
 import MovementReport from '../components/MovementReport';
+import Notifications from '../components/Notifications';
+import RentalRequests from '../components/RentalRequests';  // Nuevo import
 import api from '../services/api';
 
 const Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState('Inicio');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -28,14 +31,31 @@ const Dashboard = () => {
     fetchUserData();
   }, []);
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await api.get('/notifications/unread');
+        setUnreadNotifications(response.data.count);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    fetchNotifications();
+    // Establecer un intervalo para verificar nuevas notificaciones
+    const interval = setInterval(fetchNotifications, 30000); // cada 30 segundos
+    return () => clearInterval(interval);
+  }, []);
+
   const renderContent = () => {
     switch (selectedOption) {
       case 'Inicio':
         return <div>Bienvenido al panel de control</div>;
+      case 'Solicitudes de Alquiler':
+        return <RentalRequests />;
       case 'Inventario':
         return <div>Gestión de inventario</div>;
-      case 'Reportes':
-        return <div>Visualización de reportes</div>;
+      case 'Notificaciones':
+        return <Notifications />;
       case 'Consultar movimientos':
         return <MovementReport />;  
       case 'Contratos':
@@ -76,13 +96,28 @@ const Dashboard = () => {
           title="General"
           options={[
             { icon: <FaHome />, text: 'Inicio' },
-            { icon: <FaBox />, text: 'Inventario' },
-            { icon: <FaChartBar />, text: 'Reportes' },
-            { icon: < FaStore/>, text: 'Consultar movimientos' },
-             { icon: <FaFileAlt/>, text: 'Contratos' },
+            { icon: <FaBox />, text: 'Solicitudes de Alquiler' },
+            { 
+              icon: (
+                <div className="relative">
+                  <FaBell />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                      {unreadNotifications}
+                    </span>
+                  )}
+                </div>
+              ), 
+              text: 'Notificaciones'
+            },
+            { icon: <FaStore/>, text: 'Consultar movimientos' },
+            { icon: <FaFileAlt/>, text: 'Contratos' },
           ]}
           onOptionClick={(option) => {
             setSelectedOption(option);
+            if (option === 'Notificaciones') {
+              setUnreadNotifications(0);
+            }
             setIsMenuOpen(false); // Cierra el menú al seleccionar una opción
           }}
         />
