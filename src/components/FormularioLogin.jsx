@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FaRegEye, FaRegEyeSlash } from 'react-icons/fa';
 import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
-import api from "../services/api";
+import { userApi } from "../services/api";
 import logo from '../assets/imagenLogin.png';
 
 const FormularioLogin = () => {
@@ -22,16 +22,59 @@ const FormularioLogin = () => {
         if (!isButtonEnabled) return;
 
         try {
-            const response = await api.post("/cuenta/login", { idNumber: usuario, password: contrasena });
-            sessionStorage.setItem("token", response.data.token);
+            console.log('Intentando login con:', { correo: usuario.trim() });
+            
+            const response = await userApi.post("/login", { 
+                correo: usuario.trim(),
+                password: contrasena 
+            });
+            
+            console.log('Respuesta del servidor:', response.data);
+
+            if (!response.data || !response.data.token) {
+                throw new Error('Respuesta inválida del servidor');
+            }
+
+            const { token, user } = response.data;
+            
+            if (!token || !user) {
+                throw new Error('Respuesta inválida del servidor');
+            }
+
+            sessionStorage.setItem("token", token);
+            sessionStorage.setItem("userRole", user.tipoUsuario);
+            
+            let redirectPath;
+            switch (user.tipoUsuario) {
+                case 'cliente':
+                case 'vendedor':
+                    redirectPath = '/dashboard';
+                    break;
+                case 'admin':
+                    redirectPath = '/admin';
+                    break;
+                default:
+                    throw new Error('Rol no válido');
+            }
+
             Swal.fire({
                 title: "Inicio de sesión exitoso",
                 text: "Bienvenido a la plataforma",
                 icon: "success",
                 confirmButtonText: "Aceptar"
-            }).then(() => navigate("/"));
+            }).then(() => navigate(redirectPath));
+
         } catch (error) {
-            Swal.fire({ title: "Error", text: "Credenciales incorrectas", icon: "error" });
+            console.error('Error en login:', error);
+            const errorMessage = error.response?.data?.error || 
+                               error.message || 
+                               "Error al iniciar sesión";
+            
+            Swal.fire({ 
+                title: "Error", 
+                text: errorMessage,
+                icon: "error" 
+            });
         }
     };
 

@@ -1,19 +1,43 @@
 import axios from 'axios';
+import { API_URLS } from '../config/apiConfig';
 
-const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+const createAxiosInstance = (baseURL) => {
+    const instance = axios.create({
+        baseURL,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
 
-// Interceptor para manejar errores
-api.interceptors.response.use(
-  response => response,
-  error => {
-    console.error('API Error:', error.response?.data || error.message);
-    return Promise.reject(error);
-  }
-);
+    // Interceptor para añadir el token
+    instance.interceptors.request.use(
+        (config) => {
+            const token = sessionStorage.getItem('token');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        },
+        (error) => Promise.reject(error)
+    );
 
-export default api;
+    // Interceptor para manejar errores
+    instance.interceptors.response.use(
+        response => response,
+        error => {
+            if (error.response?.status === 401) {
+                sessionStorage.removeItem('token');
+                window.location.href = '/login';
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    return instance;
+};
+
+export const api = createAxiosInstance(API_URLS.main);
+export const userApi = createAxiosInstance(API_URLS.user);
+export const authApi = createAxiosInstance(API_URLS.auth);
+
+export default api; // Mantener exportación por defecto para compatibilidad

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
 import axios from 'axios'; // Importar axios
 import logo from '../assets/imagenLogin.png'; // Importar la imagen
-import api from '../services/api';
+import api, { userApi } from '../services/api';
 
 const FormularioRegistrarse = () => {
 
@@ -33,8 +33,7 @@ const FormularioRegistrarse = () => {
         const [primerApellido, segundoApellido = ''] = apellidos.trim().split(' ');
 
         try {
-            // Enviar la información al servidor usando axios
-            const response = await api.post('/registro', {
+            const response = await userApi.post('/register', {
                 primerNombre,
                 segundoNombre,
                 primerApellido,
@@ -42,7 +41,8 @@ const FormularioRegistrarse = () => {
                 fechaNacimiento,
                 telefono,
                 correo,
-                contrasena,
+                password: contrasena, // Cambiar contrasena a password
+                tipoUsuario: 'cliente' // Agregar tipo de usuario
             });
 
             console.log('Respuesta del servidor:', response.data);

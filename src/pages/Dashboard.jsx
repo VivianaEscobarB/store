@@ -17,6 +17,26 @@ const Dashboard = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const userRole = sessionStorage.getItem("userRole");
+
+  // Definir las opciones del menú según el rol
+  const getMenuOptions = () => {
+    if (userRole === 'cliente') {
+      return [
+        { icon: <FaHome />, text: 'Inicio' },
+        { icon: <FaBell />, text: 'Notificaciones' },
+        { icon: <FaFileContract />, text: 'Contratos' },
+        { icon: <FaStore />, text: 'Consultar movimientos' }
+      ];
+    } else if (userRole === 'vendedor') {
+      return [
+        { icon: <FaHome />, text: 'Inicio' },
+        { icon: <FaBox />, text: 'Solicitudes de Alquiler' },
+        { icon: <FaBell />, text: 'Notificaciones' }
+      ];
+    }
+    return [];
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -94,25 +114,7 @@ const Dashboard = () => {
         </div>
         <MenuSection
           title="General"
-          options={[
-            { icon: <FaHome />, text: 'Inicio' },
-            { icon: <FaBox />, text: 'Solicitudes de Alquiler' },
-            { 
-              icon: (
-                <div className="relative">
-                  <FaBell />
-                  {unreadNotifications > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                      {unreadNotifications}
-                    </span>
-                  )}
-                </div>
-              ), 
-              text: 'Notificaciones'
-            },
-            { icon: <FaStore/>, text: 'Consultar movimientos' },
-            { icon: <FaFileAlt/>, text: 'Contratos' },
-          ]}
+          options={getMenuOptions()}
           onOptionClick={(option) => {
             setSelectedOption(option);
             if (option === 'Notificaciones') {
