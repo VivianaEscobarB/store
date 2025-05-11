@@ -31,16 +31,13 @@ const FormularioLogin = () => {
             
             console.log('Respuesta del servidor:', response.data);
 
-            if (!response.data || !response.data.token) {
-                throw new Error('Respuesta inválida del servidor');
-            }
-
             const { token, user } = response.data;
             
             if (!token || !user) {
                 throw new Error('Respuesta inválida del servidor');
             }
 
+            // Guardar datos en sessionStorage
             sessionStorage.setItem("token", token);
             sessionStorage.setItem("userRole", user.tipoUsuario);
             
@@ -57,12 +54,16 @@ const FormularioLogin = () => {
                     throw new Error('Rol no válido');
             }
 
-            Swal.fire({
+            // Mostrar alerta y forzar navegación
+            await Swal.fire({
                 title: "Inicio de sesión exitoso",
                 text: "Bienvenido a la plataforma",
                 icon: "success",
                 confirmButtonText: "Aceptar"
-            }).then(() => navigate(redirectPath));
+            });
+
+            // Forzar navegación
+            window.location.href = redirectPath;
 
         } catch (error) {
             console.error('Error en login:', error);

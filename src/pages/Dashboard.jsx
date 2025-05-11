@@ -51,7 +51,7 @@ const Dashboard = () => {
     fetchUserData();
   }, []);
 
-  useEffect(() => {
+  /*useEffect(() => {
     const fetchNotifications = async () => {
       try {
         const response = await api.get('/notifications/unread');
@@ -64,7 +64,7 @@ const Dashboard = () => {
     // Establecer un intervalo para verificar nuevas notificaciones
     const interval = setInterval(fetchNotifications, 30000); // cada 30 segundos
     return () => clearInterval(interval);
-  }, []);
+  }, []);*/
 
   const renderContent = () => {
     switch (selectedOption) {
@@ -108,8 +108,8 @@ const Dashboard = () => {
         <Logo />
         <div className="w-full mt-4 flex flex-row items-center">
           <UserInfo 
-            username={userData?.nombre || "Usuario"} 
-            role={userData?.rol}
+            username={userData ? `${userData.nombre}` : "Usuario"} 
+            role={userData?.rol || userRole}
           />
         </div>
         <MenuSection

@@ -53,10 +53,16 @@ const ContractManagement = () => {
     if (value.trim() === '') {
       setFilteredWarehouses([]);
     } else {
-      const filtered = warehouses.filter((warehouse) =>
-        warehouse.descripcion.toLowerCase().includes(value)
-      );
-      setFilteredWarehouses(filtered);
+      // Filtrar bodegas que no están en proceso de solicitud
+      const availableWarehouses = warehouses.filter(warehouse => {
+        const isInProcess = warehouseRequests.some(
+          request => 
+            request.status === 'Pendiente' && 
+            request.bodega?.id === warehouse.id
+        );
+        return !isInProcess && warehouse.descripcion.toLowerCase().includes(value);
+      });
+      setFilteredWarehouses(availableWarehouses);
     }
   };
 
@@ -83,6 +89,7 @@ const ContractManagement = () => {
   useEffect(() => {
     fetchWarehouses();
     fetchWarehouseRequests();
+    fetchContratos();
   }, []);
 
   const fetchWarehouses = async () => {
@@ -106,18 +113,70 @@ const ContractManagement = () => {
       const response = await api.get('/contratos');
       if (response.data) {
         console.log('Contratos recibidos:', response.data);
-        setWarehouseRequests(response.data);
+        // Transformar los datos para mantener el formato esperado
+        const formattedRequests = response.data.map(contrato => ({
+          id: contrato.id,
+          warehouse: contrato.bodega?.descripcion || 'N/A',
+          productType: contrato.tipoproducto || 'No especificado',
+          rentalPeriod: `${new Date(contrato.fechaInicio).toLocaleDateString()} - ${new Date(contrato.fechaFin).toLocaleDateString()}`,
+          requestDate: new Date(contrato.fechaInicio).toLocaleDateString(),
+          requester: contrato.cliente?.nombre || 'No especificado',
+          status: contrato.status,
+          // Mantener los datos originales para otras funcionalidades
+          ...contrato
+        }));
+        setWarehouseRequests(formattedRequests);
       } else {
-        console.log('No hay contratos disponibles');
         setWarehouseRequests([]);
       }
     } catch (error) {
       console.error('Error fetching requests:', error);
       setWarehouseRequests([]);
-      // Solo mostrar alerta si es un error real, no cuando simplemente no hay datos
-      if (error.response && error.response.status !== 404) {
-        Swal.fire('Error', 'No se pudieron cargar las solicitudes', 'error');
+    }
+  };
+
+  const fetchContratos = async () => {
+    try {
+      const token = sessionStorage.getItem('token');
+      const userId = sessionStorage.getItem('userId'); // Asegúrate de tener el ID del usuario guardado
+      
+      if (!token) {
+        throw new Error('No hay token de autenticación');
       }
+
+      const config = {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      };
+
+      // Primero intentamos obtener todos los contratos
+      const contratosResponse = await api.get('/contratos', config);
+      console.log('Respuesta de contratos:', contratosResponse.data);
+      
+      if (contratosResponse.data) {
+        // Filtrar los contratos por el ID del cliente actual si es necesario
+        const contratosCliente = contratosResponse.data.filter(contrato => 
+          contrato.cliente && contrato.cliente.id === parseInt(userId)
+        );
+        
+        setContracts(contratosCliente);
+        console.log('Contratos filtrados del cliente:', contratosCliente);
+      }
+
+    } catch (error) {
+      console.error('Error detallado al cargar contratos:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al cargar contratos',
+        text: 'No se pudieron cargar los contratos. Por favor, intente más tarde.'
+      });
     }
   };
 
@@ -131,18 +190,7 @@ const ContractManagement = () => {
       Swal.fire('Error', 'No se pudo crear el contrato', 'error');
     }
   };
-
-  const updateContrato = async (id, contratoData) => {
-    try {
-      await axios.put(`http://localhost:5000/api/contratos/${id}`, contratoData);
-      await fetchWarehouseRequests();
-      Swal.fire('Éxito', 'Contrato actualizado correctamente', 'success');
-    } catch (error) {
-      console.error('Error al actualizar contrato:', error);
-      Swal.fire('Error', 'No se pudo actualizar el contrato', 'error');
-    }
-  };
-
+  
   const deleteContrato = async (id) => {
     try {
       await axios.delete(`http://localhost:5000/api/contratos/${id}`);
@@ -205,9 +253,8 @@ const ContractManagement = () => {
     const newRequest = {
       warehouse: selectedWarehouse.descripcion,
       productType: e.target.productType.value,
-      rentalPeriod: e.target.rentalPeriod.value,
+      rentalPeriod: e.target.rentalPeriod.value, // Mantener el campo rentalPeriod como texto
       requestDate: new Date().toLocaleDateString(),
-      requester: userName,
       status: 'Pendiente',
     };
 
@@ -222,7 +269,7 @@ const ContractManagement = () => {
     }
   };
 
-  const handleDeleteRequest = async (index) => {
+  const handleDeleteRequest = async (id) => {
     const result = await Swal.fire({
       title: '¿Estás seguro?',
       text: 'Esta acción eliminará la solicitud de forma permanente.',
@@ -234,9 +281,7 @@ const ContractManagement = () => {
 
     if (result.isConfirmed) {
       try {
-        const pendingRequests = warehouseRequests.filter(request => request.status === 'Pendiente');
-        const requestToDelete = pendingRequests[index];
-        await axios.delete(`http://localhost:5000/api/warehouse-requests/${requestToDelete.id}`);
+        await axios.delete(`http://localhost:5000/api/warehouse-requests/${id}`);
         await fetchWarehouseRequests();
         Swal.fire('Eliminado', 'La solicitud ha sido eliminada.', 'success');
       } catch (error) {
@@ -263,18 +308,37 @@ const ContractManagement = () => {
         </div>
         {filteredWarehouses.length > 0 && (
           <ul className="absolute top-full left-0 w-full max-w-md bg-[#FFFFFF] border border-gray-300 rounded-md shadow-lg mt-1 z-10">
-            {filteredWarehouses.slice(0, 5).map((warehouse) => (
-              <li
-                key={warehouse.id}
-                className="p-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleSelectWarehouse(warehouse)}
-              >
-                <div className="font-medium">{warehouse.descripcion}</div>
-                <div className="text-sm text-gray-500">
-                  Dimensiones: {warehouse.largo}x{warehouse.ancho}x{warehouse.alto}
-                </div>
-              </li>
-            ))}
+            {filteredWarehouses.slice(0, 5).map((warehouse) => {
+              const isInProcess = warehouseRequests.some(
+                request => 
+                  request.status === 'Pendiente' && 
+                  request.bodega?.id === warehouse.id
+              );
+
+              return (
+                <li
+                  key={warehouse.id}
+                  className={`p-2 ${
+                    isInProcess 
+                      ? 'bg-gray-100 cursor-not-allowed opacity-60' 
+                      : 'hover:bg-gray-100 cursor-pointer'
+                  }`}
+                  onClick={() => !isInProcess && handleSelectWarehouse(warehouse)}
+                >
+                  <div className="font-medium">
+                    {warehouse.descripcion}
+                    {isInProcess && (
+                      <span className="ml-2 text-yellow-600 text-sm">
+                        (En proceso de solicitud)
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Dimensiones: {warehouse.largo}x{warehouse.ancho}x{warehouse.alto}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -285,9 +349,9 @@ const ContractManagement = () => {
           <thead>
             <tr className="bg-gray-100">
               <th className="border border-gray-300 p-2 text-left">Bodega</th>
-              <th className="border border-gray-300 p-2 text-left">Tipo de Producto</th>
-              <th className="border border-gray-300 p-2 text-left">Fecha Inicio</th>
-              <th className="border border-gray-300 p-2 text-left">Fecha Fin</th>
+              <th className="border border-gray-300 p-2 text-left">Ciudad</th>
+              <th className="border border-gray-300 p-2 text-left">Período</th>
+              <th className="border border-gray-300 p-2 text-left">Precio</th>
               <th className="border border-gray-300 p-2 text-left">Estado</th>
               <th className="border border-gray-300 p-2 text-left">Acciones</th>
             </tr>
@@ -298,25 +362,23 @@ const ContractManagement = () => {
                 .filter(request => request.status === 'Aprobado')
                 .map((request, index) => (
                   <tr key={index} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 p-2">{request.warehouse}</td>
-                    <td className="border border-gray-300 p-2">{request.productType}</td>
-                    <td className="border border-gray-300 p-2">{request.startDate || request.requestDate}</td>
-                    <td className="border border-gray-300 p-2">{request.endDate || '-'}</td>
+                    <td className="border border-gray-300 p-2">{request.bodega?.descripcion || 'N/A'}</td>
+                    <td className="border border-gray-300 p-2">{request.bodega?.ciudad || 'N/A'}</td>
+                    <td className="border border-gray-300 p-2">
+                      {new Date(request.fechaInicio).toLocaleDateString()} - {new Date(request.fechaFin).toLocaleDateString()}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      ${request.precioTotal?.toLocaleString() || '0'}
+                    </td>
                     <td className={`border border-gray-300 p-2 ${getStatusStyle(request.status)}`}>
                       {request.status}
                     </td>
                     <td className="border border-gray-300 p-2">
                       <button
-                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2"
+                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2 cursor-pointer"
                         onClick={() => handleRowClick(request)}
                       >
                         Ver detalles
-                      </button>
-                      <button
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => handleDeleteRequest(index)}
-                      >
-                        <FaTrash />
                       </button>
                     </td>
                   </tr>
@@ -341,8 +403,8 @@ const ContractManagement = () => {
               <th className="border border-gray-300 p-2 text-left">Tipo de Producto</th>
               <th className="border border-gray-300 p-2 text-left">Período de Alquiler</th>
               <th className="border border-gray-300 p-2 text-left">Fecha de Solicitud</th>
-              <th className="border border-gray-300 p-2 text-left">Solicitante</th>
               <th className="border border-gray-300 p-2 text-left">Estado</th>
+              <th className="border border-gray-300 p-2 text-left">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -351,21 +413,20 @@ const ContractManagement = () => {
                 .filter(request => request.status === 'Pendiente')
                 .map((request, index) => (
                   <tr
-                    key={index}
-                    className="hover:bg-gray-50 relative group"
+                    key={request.id}
+                    className="hover:bg-gray-50 relative"
                   >
                     <td className="border border-gray-300 p-2">{request.warehouse}</td>
                     <td className="border border-gray-300 p-2">{request.productType}</td>
                     <td className="border border-gray-300 p-2">{request.rentalPeriod}</td>
                     <td className="border border-gray-300 p-2">{request.requestDate}</td>
-                    <td className="border border-gray-300 p-2">{request.requester}</td>
                     <td className={`border border-gray-300 p-2 ${getStatusStyle(request.status)}`}>
                       {request.status}
                     </td>
-                    <td className="absolute inset-0 flex justify-center items-center bg-gray-45 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="border border-gray-300 p-2">
                       <button
                         className="text-red-500 hover:text-red-700 cursor-pointer"
-                        onClick={() => handleDeleteRequest(index)}
+                        onClick={() => handleDeleteRequest(request.id)}
                       >
                         <FaTrash />
                       </button>
@@ -375,7 +436,7 @@ const ContractManagement = () => {
             ) : (
               <tr>
                 <td colSpan="6" className="text-center p-4 text-gray-500">
-                  No hay bodegas solicitadas registradas.
+                  No hay bodegas solicitadas pendientes.
                 </td>
               </tr>
             )}
@@ -484,8 +545,6 @@ const ContractManagement = () => {
             </button>
             <h3 className="text-xl font-bold mb-4">Solicitar Bodega</h3>
             <p className="mb-2"><strong>Bodega seleccionada:</strong> {selectedWarehouse.descripcion}</p>
-            <p className="mb-2"><strong>Fecha de solicitud:</strong> {new Date().toLocaleDateString()}</p>
-            <p className="mb-4"><strong>Solicitante:</strong> {userName}</p>
             <form onSubmit={handleWarehouseSubmit} className="flex flex-col gap-4">
               <input
                 type="text"

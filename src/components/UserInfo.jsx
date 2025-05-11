@@ -1,53 +1,50 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FaChevronDown } from 'react-icons/fa';
+import React from 'react';
+import { FaUser, FaSignOutAlt } from 'react-icons/fa';
+import { authService } from '../services/authService';
+import Swal from 'sweetalert2';
 
-const UserInfo = ({ username }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+const UserInfo = ({ username = "Usuario", role = "" }) => {
+  const handleLogout = async () => {
+    try {
+      const result = await Swal.fire({
+        title: '¿Cerrar sesión?',
+        text: "¿Estás seguro de que deseas salir?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, cerrar sesión',
+        cancelButtonText: 'Cancelar'
+      });
 
-  // Cierra el menú al hacer clic fuera de él
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setIsMenuOpen(false);
+      if (result.isConfirmed) {
+        await authService.logout();
       }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleLogout = () => {
-    // Lógica para cerrar sesión
-    console.log('Sesión cerrada');
-    setIsMenuOpen(false); // Cierra el menú después de cerrar sesión
+    } catch (error) {
+      // En caso de error, forzar el cierre de sesión
+      sessionStorage.clear();
+      window.location.href = '/login';
+    }
   };
 
   return (
-    <div className="relative bg-[#2F855A] text-white p-2 rounded-md shadow-md w-[84%] ml-[10px]">
-      <div className="flex justify-between items-center">
-        <span className="block text-sm font-bold">{username}</span>
-        <button
-          className="flex items-center text-white hover:text-gray-200 cursor-pointer"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+    <div className="flex flex-col w-full bg-[#C4DDFF] rounded-lg p-4 shadow-md">
+      <div className="flex items-center space-x-4">
+        <div className="bg-[#7FB3FA] rounded-full p-3">
+          <FaUser className="text-white text-xl" />
+        </div>
+        <div className="flex-1">
+          <h2 className="font-bold text-gray-800 text-lg">{username}</h2>
+          <p className="text-gray-600 capitalize">{role}</p>
+        </div>
+        <button 
+          onClick={handleLogout}
+          className="bg-[#7FB3FA] hover:bg-[#5A8DD6] text-white p-2 rounded-full transition-colors cursor-pointer"
+          title="Cerrar sesión"
         >
-          <FaChevronDown />
+          <FaSignOutAlt />
         </button>
       </div>
-      {isMenuOpen && (
-        <div
-          ref={menuRef}
-          className="absolute top-0 right-[-12rem] w-48 bg-white border border-gray-200 rounded-lg shadow-lg"
-        >
-          <button
-            className="cursor-pointer block w-full text-left px-4 py-1.5 text-gray-700 hover:bg-red-500 hover:text-white rounded-lg"
-            onClick={handleLogout}
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      )}
     </div>
   );
 };

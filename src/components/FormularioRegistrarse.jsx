@@ -28,12 +28,13 @@ const FormularioRegistrarse = () => {
     const registrarse = async () => {
         if (!isButtonEnabled) return;
 
-        // Separar nombres y apellidos en variables diferentes
-        const [primerNombre, segundoNombre = ''] = nombres.trim().split(' ');
-        const [primerApellido, segundoApellido = ''] = apellidos.trim().split(' ');
-
         try {
-            const response = await userApi.post('/register', {
+            // Separar nombres y apellidos
+            const [primerNombre = '', segundoNombre = ''] = nombres.trim().split(' ');
+            const [primerApellido = '', segundoApellido = ''] = apellidos.trim().split(' ');
+
+            // Crear el objeto de datos según el modelo esperado
+            const userData = {
                 primerNombre,
                 segundoNombre,
                 primerApellido,
@@ -41,9 +42,14 @@ const FormularioRegistrarse = () => {
                 fechaNacimiento,
                 telefono,
                 correo,
-                password: contrasena, // Cambiar contrasena a password
-                tipoUsuario: 'cliente' // Agregar tipo de usuario
-            });
+                password: contrasena,
+                tipoUsuarioId: 2, // ID para cliente
+                direccion: '' // Campo opcional pero requerido por el modelo
+            };
+
+            console.log('Datos a enviar:', userData);
+
+            const response = await userApi.post('/register', userData);
 
             console.log('Respuesta del servidor:', response.data);
 
@@ -53,10 +59,12 @@ const FormularioRegistrarse = () => {
                 icon: "success",
                 confirmButtonText: "Aceptar"
             }).then(() => navigate("/"));
+
         } catch (error) {
+            console.error('Error detallado:', error.response?.data);
             Swal.fire({ 
                 title: "Error", 
-                text: error.response?.data?.message || "No se pudo completar el registro", 
+                text: error.response?.data?.message || "Error en el registro. Verifica los datos ingresados.", 
                 icon: "error" 
             });
         }

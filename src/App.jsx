@@ -15,19 +15,25 @@ function App() {
   
   useEffect(() => {
     const token = sessionStorage.getItem('token');
-    if (token) {
-      // Decodificar el token JWT (puedes usar jwt-decode)
-      // setUser(decoded);
+    const userRole = sessionStorage.getItem('userRole');
+    if (token && userRole) {
+      setUser({ tipoUsuario: userRole });
     }
   }, []);
 
   // Componente para proteger rutas
   const PrivateRoute = ({ children, allowedRoles }) => {
-    if (!user) {
+    const userRole = sessionStorage.getItem('userRole');
+    console.log('Current userRole:', userRole);
+    console.log('Allowed roles:', allowedRoles);
+
+    if (!userRole) {
+      console.log('No user role found, redirecting to login');
       return <Navigate to="/login" replace />;
     }
 
-    if (allowedRoles && !allowedRoles.includes(user.tipoUsuario)) {
+    if (allowedRoles && !allowedRoles.includes(userRole)) {
+      console.log('User role not allowed');
       return <Navigate to="/unauthorized" replace />;
     }
 
@@ -42,28 +48,22 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/recuperarContraseña" element={<RecuperarContraseña />} />
         <Route path="/registrarse" element={<Registrarse />} />
-        <Route path="/restablecerContraseña" element={<RestablecerContraseña />} />
         
-        {/* Rutas protegidas */}
+        {/* Ruta del Dashboard */}
         <Route path="/dashboard" element={
-          <PrivateRoute allowedRoles={['cliente']}>
+          <PrivateRoute allowedRoles={['cliente', 'vendedor']}>
             <Dashboard />
           </PrivateRoute>
         } />
         
-        <Route path="/bodega" element={
-          <PrivateRoute allowedRoles={['vendedor']}>
-            <InicioBodega />
-          </PrivateRoute>
-        } />
-        
+        {/* Ruta del Admin */}
         <Route path="/admin" element={
           <PrivateRoute allowedRoles={['admin']}>
             <InicioAdmin />
           </PrivateRoute>
         } />
 
-        {/* Ruta de unauthorized */}
+        {/* Ruta no autorizada */}
         <Route path="/unauthorized" element={
           <div className="flex items-center justify-center h-screen">
             <h1>No tienes permisos para acceder a esta página</h1>
