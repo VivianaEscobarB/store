@@ -13,12 +13,10 @@ const ContractManagement = () => {
   const [filteredWarehouses, setFilteredWarehouses] = useState([]);
   const [contracts, setContracts] = useState([]);
   const [formData, setFormData] = useState({
-    clientName: '',
-    product: '',
-    startDate: '',
-    endDate: '',
-    status: 'Pendiente',
-  });
+  warehouseId: '', // Ya existe, asegúrate de que esté
+  productType: '',
+  rentalPeriod: '',
+});
   const [selectedContract, setSelectedContract] = useState(null);
   const [isWarehouseModalOpen, setIsWarehouseModalOpen] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
@@ -38,6 +36,22 @@ const ContractManagement = () => {
         return 'text-red-500 font-bold';
       default:
         return '';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Fecha no disponible';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Fecha inválida';
+      return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error al formatear fecha:', error);
+      return 'Error en formato de fecha';
     }
   };
 
@@ -66,11 +80,16 @@ const ContractManagement = () => {
     }
   };
 
-  const handleSelectWarehouse = (warehouse) => {
+  // Manejar el evento de selección de bodegas
+    const handleSelectWarehouse = (warehouse) => {
     setSearchTerm(warehouse.descripcion);
     setFilteredWarehouses([]);
-    setSelectedWarehouse(warehouse);
-    setIsWarehouseModalOpen(true);
+    setFormData({
+      warehouseId: warehouse.id,
+      productType: '',
+      rentalPeriod: '',
+    });
+    setIsModalOpen(true);
   };
 
   const handleClickOutside = (event) => {
@@ -112,7 +131,7 @@ const ContractManagement = () => {
     try {
       const response = await api.get('/contratos');
       if (response.data) {
-        console.log('Contratos recibidos:', response.data);
+       // console.log('Contratos recibidos:', response.data);
         // Transformar los datos para mantener el formato esperado
         const formattedRequests = response.data.map(contrato => ({
           id: contrato.id,
@@ -162,7 +181,7 @@ const ContractManagement = () => {
         );
         
         setContracts(contratosCliente);
-        console.log('Contratos filtrados del cliente:', contratosCliente);
+        //console.log('Contratos filtrados del cliente:', contratosCliente);
       }
 
     } catch (error) {
@@ -191,17 +210,7 @@ const ContractManagement = () => {
     }
   };
   
-  const deleteContrato = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5000/api/contratos/${id}`);
-      await fetchWarehouseRequests();
-      Swal.fire('Éxito', 'Contrato eliminado correctamente', 'success');
-    } catch (error) {
-      console.error('Error al eliminar contrato:', error);
-      Swal.fire('Error', 'No se pudo eliminar el contrato', 'error');
-    }
-  };
-
+ 
   const handleSubmit = async (e) => {
     e.preventDefault();
     await createContrato(formData);
@@ -281,12 +290,15 @@ const ContractManagement = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`http://localhost:5000/api/warehouse-requests/${id}`);
+        await api.delete(`/contratos/request/${id}`);
         await fetchWarehouseRequests();
         Swal.fire('Eliminado', 'La solicitud ha sido eliminada.', 'success');
       } catch (error) {
-        console.error('Error deleting request:', error);
-        Swal.fire('Error', 'No se pudo eliminar la solicitud', 'error');
+        console.error('Error al eliminar solicitud:', error);
+        Swal.fire('Error', 
+          error.response?.data?.message || 'No se pudo eliminar la solicitud', 
+          'error'
+        );
       }
     }
   };
@@ -365,7 +377,7 @@ const ContractManagement = () => {
                     <td className="border border-gray-300 p-2">{request.bodega?.descripcion || 'N/A'}</td>
                     <td className="border border-gray-300 p-2">{request.bodega?.ciudad || 'N/A'}</td>
                     <td className="border border-gray-300 p-2">
-                      {new Date(request.fechaInicio).toLocaleDateString()} - {new Date(request.fechaFin).toLocaleDateString()}
+                      {formatDate(request.fechaInicio)} - {formatDate(request.fechaFin)}
                     </td>
                     <td className="border border-gray-300 p-2">
                       ${request.precioTotal?.toLocaleString() || '0'}
@@ -534,49 +546,55 @@ const ContractManagement = () => {
         </div>
       )}
 
-      {isWarehouseModalOpen && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
-            <button
-              className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-              onClick={() => setIsWarehouseModalOpen(false)}
-            >
-              ✖
-            </button>
-            <h3 className="text-xl font-bold mb-4">Solicitar Bodega</h3>
-            <p className="mb-2"><strong>Bodega seleccionada:</strong> {selectedWarehouse.descripcion}</p>
-            <form onSubmit={handleWarehouseSubmit} className="flex flex-col gap-4">
-              <input
-                type="text"
-                name="productType"
-                placeholder="Tipo de producto"
-                className="p-2 border border-gray-300 rounded-md"
-                required
-              />
-              <input
-                type="text"
-                name="rentalPeriod"
-                placeholder="Período de alquiler (ej. 3 meses)"
-                className="p-2 border border-gray-300 rounded-md"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
-              >
-                Solicitar
-              </button>
-              <button
-                type="button"
-                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
-                onClick={() => setIsWarehouseModalOpen(false)}
-              >
-                Cancelar
-              </button>
-            </form>
-          </div>
-        </div>
+      {isModalOpen && (
+  <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
+      <button
+        className="absolute top-2 right-2 text-red-500 hover:text-red-700 cursor-pointer"
+        onClick={() => setIsModalOpen(false)}
+      >
+        ❌
+      </button>
+      <h3 className="text-xl font-bold mb-4">Solicitar Bodega</h3>
+      {formData.warehouseId && warehouses.find(wh => wh.id === formData.warehouseId)?.descripcion && (
+        <p className="mb-2"><strong>Bodega seleccionada:</strong> {warehouses.find(wh => wh.id === formData.warehouseId).descripcion}</p>
       )}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <input
+          type="text"
+          name="productType"
+          placeholder="Tipo de Producto"
+          value={formData.productType}
+          onChange={handleInputChange}
+          className="p-2 border border-gray-300 rounded-md"
+          required
+        />
+        <input
+          type="text"
+          name="rentalPeriod"
+          placeholder="Período de Alquiler (ej. 3 meses)"
+          value={formData.rentalPeriod}
+          onChange={handleInputChange}
+          className="p-2 border border-gray-300 rounded-md"
+          required
+        />
+        <button
+          type="submit"
+          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors cursor-pointer"
+        >
+          Enviar Solicitud
+        </button>
+        <button
+          type="button"
+          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors cursor-pointer"
+          onClick={() => setIsModalOpen(false)}
+        >
+          Cancelar
+        </button>
+      </form>
+    </div>
+  </div>
+)}
     </div>
   );
 };

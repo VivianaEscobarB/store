@@ -39,7 +39,14 @@ const FormularioLogin = () => {
 
             // Guardar datos en sessionStorage
             sessionStorage.setItem("token", token);
+            sessionStorage.setItem("userId", user.id);
             sessionStorage.setItem("userRole", user.tipoUsuario);
+
+            console.log('Datos guardados en session:', {
+              token,
+              userId: user.id,
+              userRole: user.tipoUsuario
+            });
             
             let redirectPath;
             switch (user.tipoUsuario) {
