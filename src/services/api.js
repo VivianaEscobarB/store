@@ -18,6 +18,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Agregar interceptor de respuesta para mejor manejo de errores
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', error.response);
+    if (error.response?.status === 404) {
+      console.error('Recurso no encontrado:', error.config.url);
+    }
+    return Promise.reject(error);
+  }
+);
+
 // API para rutas de usuario/autenticación
 export const userApi = axios.create({
   baseURL: API_URLS.user,
