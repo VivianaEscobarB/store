@@ -48,6 +48,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/recuperarContraseña" element={<RecuperarContraseña />} />
         <Route path="/registrarse" element={<Registrarse />} />
+        <Route path="/bodega" element={<InicioBodega/>} />
         
         {/* Ruta del Dashboard */}
         <Route path="/dashboard" element={
@@ -59,7 +60,8 @@ function App() {
         {/* Ruta del Admin */}
         <Route path="/admin" element={
           <PrivateRoute allowedRoles={['admin']}>
-            <InicioAdmin />
+            {/*<InicioAdmin />*/}
+            <Dashboard />
           </PrivateRoute>
         } />
 
