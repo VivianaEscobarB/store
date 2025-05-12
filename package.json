@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.13",
     "@shadcn/ui": "^0.0.4",
     "@tailwindcss/vite": "^4.0.1",
     "axios": "^1.8.4",
+    "jspdf": "^3.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-google-recaptcha": "^3.1.0",

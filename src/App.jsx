@@ -3,7 +3,7 @@ import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from './pages/login';
 import { Toaster } from 'react-hot-toast';
-import Dashboard from './pages/DashBoard';
+import Dashboard from './pages/Dashboardd';
 import RecuperarContraseña from './pages/recuperarContraseña';
 import Registrarse from './pages/registrarse';
 import RestablecerContraseña from './pages/restablecerContraseña';
@@ -48,6 +48,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/recuperarContraseña" element={<RecuperarContraseña />} />
         <Route path="/registrarse" element={<Registrarse />} />
+        <Route path="/bodega" element={<InicioBodega/>} />
         
         {/* Ruta del Dashboard */}
         <Route path="/dashboard" element={
@@ -59,7 +60,8 @@ function App() {
         {/* Ruta del Admin */}
         <Route path="/admin" element={
           <PrivateRoute allowedRoles={['admin']}>
-            <InicioAdmin />
+            {/*<InicioAdmin />*/}
+            <Dashboard />
           </PrivateRoute>
         } />
 

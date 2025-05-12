@@ -11,6 +11,9 @@ import MovementReport from '../components/MovementReport';
 import Notifications from '../components/Notifications';
 import RentalRequests from '../components/RentalRequests';  // Nuevo import
 import api from '../services/api';
+import WarehouseManager from '../components/WarehouseManager';
+
+
 
 const Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState('Inicio');
@@ -33,6 +36,13 @@ const Dashboard = () => {
         { icon: <FaBell />, text: 'Notificaciones' }
       ];
     }
+    else if (userRole === 'admin') {
+  return [
+    { icon: <FaHome />, text: 'Inicio' },
+    { icon: <FaBuilding />, text: 'Gestión de Bodegas' },
+    { icon: <FaUserPlus />, text: 'Gestión de empleados' },
+  ];
+}
     return [];
   };
 
@@ -60,6 +70,12 @@ const Dashboard = () => {
         return <MovementReport />;  
       case 'Contratos':
         return <ContractManagement/>;
+      case 'Gestión de empleados':
+        return <CreateCollaborators />;
+      case 'Añadir Producto':
+        return <AddProductForm />;
+      case 'Gestión de Bodegas':
+        return <WarehouseManager />;
       default:
         return <Notifications />;
     }
