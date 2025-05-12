@@ -27,7 +27,7 @@ const Notifications = () => {
         console.log('Notifications received:', response.data);
         setNotifications(response.data || []);
       } catch (error) {
-        console.error('Error fetching notifications:', error.response || error);
+        console.error('Error fetching notifications:', error);
       }
     };
 

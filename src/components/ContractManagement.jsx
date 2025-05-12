@@ -1,9 +1,8 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import jsPDF from 'jspdf';
 import Swal from 'sweetalert2';
 import { FaSearch, FaTrash } from 'react-icons/fa';
-import API_URL from '../config/api';
 import api from '../services/api';
 
 const ContractManagement = () => {
@@ -12,14 +11,14 @@ const ContractManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredWarehouses, setFilteredWarehouses] = useState([]);
   const [contracts, setContracts] = useState([]);
+  // Actualización del estado del formulario
   const [formData, setFormData] = useState({
-  warehouseId: '', // Ya existe, asegúrate de que esté
-  productType: '',
-  rentalPeriod: '',
-});
+    warehouseId: '',
+    productType: '',
+    fechaInicio: '',
+    fechaFin: ''
+  });
   const [selectedContract, setSelectedContract] = useState(null);
-  const [isWarehouseModalOpen, setIsWarehouseModalOpen] = useState(false);
-  const [selectedWarehouse, setSelectedWarehouse] = useState('');
   const [warehouseRequests, setWarehouseRequests] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const searchRef = useRef(null);
@@ -70,8 +69,8 @@ const ContractManagement = () => {
       // Filtrar bodegas que no están en proceso de solicitud
       const availableWarehouses = warehouses.filter(warehouse => {
         const isInProcess = warehouseRequests.some(
-          request => 
-            request.status === 'Pendiente' && 
+          request =>
+            request.status === 'Pendiente' &&
             request.bodega?.id === warehouse.id
         );
         return !isInProcess && warehouse.descripcion.toLowerCase().includes(value);
@@ -81,7 +80,7 @@ const ContractManagement = () => {
   };
 
   // Manejar el evento de selección de bodegas
-    const handleSelectWarehouse = (warehouse) => {
+  const handleSelectWarehouse = (warehouse) => {
     setSearchTerm(warehouse.descripcion);
     setFilteredWarehouses([]);
     setFormData({
@@ -114,12 +113,6 @@ const ContractManagement = () => {
   const fetchWarehouses = async () => {
     try {
       const response = await api.get('/bodegas');
-      console.log('Datos completos de cada bodega:', response.data.map(bodega => ({
-        id: bodega.id,
-        idCiudad: bodega.idCiudad,
-        ciudad: bodega.ciudad,
-        tipoBodega: bodega.tipoBodega
-      })));
       setWarehouses(response.data);
     } catch (error) {
       console.error('Error fetching warehouses:', error);
@@ -131,8 +124,8 @@ const ContractManagement = () => {
     try {
       const response = await api.get('/contratos');
       if (response.data) {
-       // console.log('Contratos recibidos:', response.data);
-        // Transformar los datos para mantener el formato esperado
+        // Formatear la respuesta para mostrar solo los campos necesarios
+        // y agregar la descripción de la bodega
         const formattedRequests = response.data.map(contrato => ({
           id: contrato.id,
           warehouse: contrato.bodega?.descripcion || 'N/A',
@@ -141,7 +134,6 @@ const ContractManagement = () => {
           requestDate: new Date(contrato.fechaInicio).toLocaleDateString(),
           requester: contrato.cliente?.nombre || 'No especificado',
           status: contrato.status,
-          // Mantener los datos originales para otras funcionalidades
           ...contrato
         }));
         setWarehouseRequests(formattedRequests);
@@ -157,31 +149,27 @@ const ContractManagement = () => {
   const fetchContratos = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      const userId = sessionStorage.getItem('userId'); // Asegúrate de tener el ID del usuario guardado
-      
+      const userId = sessionStorage.getItem('userId');
       if (!token) {
         throw new Error('No hay token de autenticación');
       }
 
       const config = {
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       };
 
-      // Primero intentamos obtener todos los contratos
+      // Obtener todos los contratos
       const contratosResponse = await api.get('/contratos', config);
-      console.log('Respuesta de contratos:', contratosResponse.data);
-      
+
       if (contratosResponse.data) {
-        // Filtrar los contratos por el ID del cliente actual si es necesario
-        const contratosCliente = contratosResponse.data.filter(contrato => 
+        // Filtrar los contratos por el ID del cliente actual si aplica
+        const contratosCliente = contratosResponse.data.filter(contrato =>
           contrato.cliente && contrato.cliente.id === parseInt(userId)
         );
-        
         setContracts(contratosCliente);
-        //console.log('Contratos filtrados del cliente:', contratosCliente);
       }
 
     } catch (error) {
@@ -190,7 +178,7 @@ const ContractManagement = () => {
         response: error.response?.data,
         status: error.response?.status
       });
-      
+
       Swal.fire({
         icon: 'error',
         title: 'Error al cargar contratos',
@@ -199,23 +187,61 @@ const ContractManagement = () => {
     }
   };
 
-  const createContrato = async (contratoData) => {
-    try {
-      await axios.post('http://localhost:5000/api/contratos', contratoData);
-      await fetchWarehouseRequests();
-      Swal.fire('Éxito', 'Contrato creado correctamente', 'success');
-    } catch (error) {
-      console.error('Error al crear contrato:', error);
-      Swal.fire('Error', 'No se pudo crear el contrato', 'error');
-    }
-  };
-  
- 
+  // Envío del formulario SIN post a notificaciones
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await createContrato(formData);
-    setFormData({ clientName: '', product: '', startDate: '', endDate: '', status: 'Pendiente' });
-    setIsModalOpen(false);
+
+    if (new Date(formData.fechaInicio) >= new Date(formData.fechaFin)) {
+      Swal.fire('Error', 'La fecha de fin debe ser posterior a la fecha de inicio', 'error');
+      return;
+    }
+
+    try {
+      const token = sessionStorage.getItem('token');
+      const userId = sessionStorage.getItem('userId');
+      if (!token) throw new Error('No hay token de autenticación');
+
+      const selectedWarehouse = warehouses.find(wh => wh.id === formData.warehouseId);
+      if (!selectedWarehouse) throw new Error('No se encontró la bodega seleccionada');
+
+      const startDate = new Date(formData.fechaInicio);
+      const endDate = new Date(formData.fechaFin);
+      const daysOfRental = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+      const dailyPrice = selectedWarehouse.precio || 100;
+      // Aumentamos un 10% el precio total:
+      const precioTotal = Math.round(daysOfRental * dailyPrice * 1.10);
+
+      const contratoData = {
+        bodegaId: Number(formData.warehouseId),
+        clienteId: Number(userId),
+        tipoproducto: formData.productType,
+        fechaInicio: formData.fechaInicio,
+        fechaFin: formData.fechaFin,
+        precioTotal: precioTotal,
+        status: 'Pendiente'
+      };
+
+      const response = await api.post('/contratos', contratoData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      setIsModalOpen(false);
+      Swal.fire('Éxito', 'Solicitud enviada correctamente', 'success');
+
+      setFormData({
+        warehouseId: '',
+        productType: '',
+        fechaInicio: '',
+        fechaFin: ''
+      });
+      setSearchTerm('');
+    } catch (error) {
+      console.error('Error al crear la solicitud:', error);
+      Swal.fire('Error', error.response?.data?.message || 'No se pudo crear la solicitud', 'error');
+    }
   };
 
   const handleRowClick = (contract) => {
@@ -257,27 +283,6 @@ const ContractManagement = () => {
     });
   };
 
-  const handleWarehouseSubmit = async (e) => {
-    e.preventDefault();
-    const newRequest = {
-      warehouse: selectedWarehouse.descripcion,
-      productType: e.target.productType.value,
-      rentalPeriod: e.target.rentalPeriod.value, // Mantener el campo rentalPeriod como texto
-      requestDate: new Date().toLocaleDateString(),
-      status: 'Pendiente',
-    };
-
-    try {
-      await axios.post('http://localhost:5000/api/warehouse-requests', newRequest);
-      await fetchWarehouseRequests();
-      setIsWarehouseModalOpen(false);
-      Swal.fire('Éxito', 'Solicitud enviada correctamente', 'success');
-    } catch (error) {
-      console.error('Error creating request:', error);
-      Swal.fire('Error', 'No se pudo crear la solicitud', 'error');
-    }
-  };
-
   const handleDeleteRequest = async (id) => {
     const result = await Swal.fire({
       title: '¿Estás seguro?',
@@ -295,8 +300,8 @@ const ContractManagement = () => {
         Swal.fire('Eliminado', 'La solicitud ha sido eliminada.', 'success');
       } catch (error) {
         console.error('Error al eliminar solicitud:', error);
-        Swal.fire('Error', 
-          error.response?.data?.message || 'No se pudo eliminar la solicitud', 
+        Swal.fire('Error',
+          error.response?.data?.message || 'No se pudo eliminar la solicitud',
           'error'
         );
       }
@@ -322,8 +327,8 @@ const ContractManagement = () => {
           <ul className="absolute top-full left-0 w-full max-w-md bg-[#FFFFFF] border border-gray-300 rounded-md shadow-lg mt-1 z-10">
             {filteredWarehouses.slice(0, 5).map((warehouse) => {
               const isInProcess = warehouseRequests.some(
-                request => 
-                  request.status === 'Pendiente' && 
+                request =>
+                  request.status === 'Pendiente' &&
                   request.bodega?.id === warehouse.id
               );
 
@@ -331,8 +336,8 @@ const ContractManagement = () => {
                 <li
                   key={warehouse.id}
                   className={`p-2 ${
-                    isInProcess 
-                      ? 'bg-gray-100 cursor-not-allowed opacity-60' 
+                    isInProcess
+                      ? 'bg-gray-100 cursor-not-allowed opacity-60'
                       : 'hover:bg-gray-100 cursor-pointer'
                   }`}
                   onClick={() => !isInProcess && handleSelectWarehouse(warehouse)}
@@ -545,56 +550,132 @@ const ContractManagement = () => {
           </div>
         </div>
       )}
-
       {isModalOpen && (
-  <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
-      <button
-        className="absolute top-2 right-2 text-red-500 hover:text-red-700 cursor-pointer"
-        onClick={() => setIsModalOpen(false)}
-      >
-        ❌
-      </button>
-      <h3 className="text-xl font-bold mb-4">Solicitar Bodega</h3>
-      {formData.warehouseId && warehouses.find(wh => wh.id === formData.warehouseId)?.descripcion && (
-        <p className="mb-2"><strong>Bodega seleccionada:</strong> {warehouses.find(wh => wh.id === formData.warehouseId).descripcion}</p>
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 cursor-pointer"
+              onClick={() => setIsModalOpen(false)}
+            >
+              ❌
+            </button>
+            <h3 className="text-xl font-bold mb-4">Solicitar Bodega</h3>
+
+            {formData.warehouseId && warehouses.find(wh => wh.id === formData.warehouseId) && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200">
+                <p className="font-medium">
+                  <span className="text-gray-700">Bodega seleccionada:</span> {warehouses.find(wh => wh.id === formData.warehouseId).descripcion}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  <span className="font-medium">Ciudad:</span> {warehouses.find(wh => wh.id === formData.warehouseId).ciudad?.nombre || 'No especificada'}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  <span className="font-medium">Precio diario:</span> ${warehouses.find(wh => wh.id === formData.warehouseId).precio?.toLocaleString() || 'No especificado'}
+                </p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="mb-2">
+                <label htmlFor="productType" className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo de Producto
+                </label>
+                <input
+                  type="text"
+                  id="productType"
+                  name="productType"
+                  placeholder="Ej: Electrónica, Alimentos, Muebles..."
+                  value={formData.productType}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-2">
+                <div>
+                  <label htmlFor="fechaInicio" className="block text-sm font-medium text-gray-700 mb-1">
+                    Fecha Inicio
+                  </label>
+                  <input
+                    type="date"
+                    id="fechaInicio"
+                    name="fechaInicio"
+                    value={formData.fechaInicio || ''}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="fechaFin" className="block text-sm font-medium text-gray-700 mb-1">
+                    Fecha Fin
+                  </label>
+                  <input
+                    type="date"
+                    id="fechaFin"
+                    name="fechaFin"
+                    value={formData.fechaFin || ''}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Mostrar el cálculo del precio si ambas fechas están seleccionadas */}
+              {formData.fechaInicio && formData.fechaFin && formData.warehouseId && (
+                <div className="p-3 bg-blue-50 rounded-md border border-blue-200 mb-2">
+                  <h4 className="font-medium text-blue-700 mb-1">Detalles del alquiler</h4>
+                  {(() => {
+                    const startDate = new Date(formData.fechaInicio);
+                    const endDate = new Date(formData.fechaFin);
+
+                    // Solo calcular si la fecha de fin es posterior a la de inicio
+                    if (endDate > startDate) {
+                      const selectedWarehouse = warehouses.find(wh => wh.id === formData.warehouseId);
+                      const daysOfRental = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+                      const dailyPrice = selectedWarehouse?.precio || 0;
+                      const totalPrice = daysOfRental * dailyPrice;
+
+                      return (
+                        <>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Duración:</span> {daysOfRental} {daysOfRental === 1 ? 'día' : 'días'}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Precio diario:</span> ${dailyPrice.toLocaleString()}
+                          </p>
+                          <p className="text-sm font-medium text-blue-800 mt-1">
+                            <span className="font-bold">Precio total estimado:</span> ${totalPrice.toLocaleString()}
+                          </p>
+                        </>
+                      );
+                    }
+                    return <p className="text-sm text-red-500">La fecha de fin debe ser posterior a la fecha de inicio</p>;
+                  })()}
+                </div>
+              )}
+
+              <div className="mt-4 flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors cursor-pointer flex items-center justify-center"
+                >
+                  Enviar Solicitud
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors cursor-pointer flex items-center justify-center"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="text"
-          name="productType"
-          placeholder="Tipo de Producto"
-          value={formData.productType}
-          onChange={handleInputChange}
-          className="p-2 border border-gray-300 rounded-md"
-          required
-        />
-        <input
-          type="text"
-          name="rentalPeriod"
-          placeholder="Período de Alquiler (ej. 3 meses)"
-          value={formData.rentalPeriod}
-          onChange={handleInputChange}
-          className="p-2 border border-gray-300 rounded-md"
-          required
-        />
-        <button
-          type="submit"
-          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors cursor-pointer"
-        >
-          Enviar Solicitud
-        </button>
-        <button
-          type="button"
-          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors cursor-pointer"
-          onClick={() => setIsModalOpen(false)}
-        >
-          Cancelar
-        </button>
-      </form>
-    </div>
-  </div>
-)}
     </div>
   );
 };
