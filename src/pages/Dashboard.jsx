@@ -26,14 +26,12 @@ const Dashboard = () => {
   const getMenuOptions = () => {
     if (userRole === 'cliente') {
       return [
-        { icon: <FaHome />, text: 'Inicio' },
         { icon: <FaBell />, text: 'Notificaciones' },
         { icon: <FaFileContract />, text: 'Contratos' },
         { icon: <FaStore />, text: 'Consultar movimientos' }
       ];
     } else if (userRole === 'vendedor') {
       return [
-        { icon: <FaHome />, text: 'Inicio' },
         { icon: <FaBox />, text: 'Solicitudes de Alquiler' },
         { icon: <FaBell />, text: 'Notificaciones' }
       ];
@@ -61,29 +59,11 @@ const Dashboard = () => {
     fetchUserData();
   }, []);
 
-  /*useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const response = await api.get('/notifications/unread');
-        setUnreadNotifications(response.data.count);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      }
-    };
-    fetchNotifications();
-    // Establecer un intervalo para verificar nuevas notificaciones
-    const interval = setInterval(fetchNotifications, 30000); // cada 30 segundos
-    return () => clearInterval(interval);
-  }, []);*/
 
   const renderContent = () => {
     switch (selectedOption) {
-      case 'Inicio':
-        return <div>Bienvenido al panel de control</div>;
       case 'Solicitudes de Alquiler':
         return <RentalRequests />;
-      case 'Inventario':
-        return <div>Gestión de inventario</div>;
       case 'Notificaciones':
         return <Notifications />;
       case 'Consultar movimientos':
@@ -97,7 +77,7 @@ const Dashboard = () => {
       case 'Gestión de Bodegas':
         return <WarehouseManager />;
       default:
-        return <div>Seleccione una opción del menú</div>;
+        return <Notifications />;
     }
   };
 
@@ -135,25 +115,15 @@ const Dashboard = () => {
             setIsMenuOpen(false); // Cierra el menú al seleccionar una opción
           }}
         />
-        <MenuSection
-          title="Acciones rápidas"
-          options={[
-            { icon: <FaUserPlus />, text: 'Crear colaboradores' },
-            { icon: <FaPlus />, text: 'Añadir Producto' },
-          ]}
-          onOptionClick={(option) => {
-            setSelectedOption(option);
-            setIsMenuOpen(false); // Cierra el menú al seleccionar una opción
-          }}
-        />
+        
       </nav>
 
       {/* Contenido principal */}
-      <main className='flex-1 flex flex-col h-full'>
-        <header className='bg-[#DBECFE] shadow-md p-8 flex justify-between items-center'>
-          <h1 className='text-2xl font-bold'>{selectedOption}</h1> {/* Aumenta el tamaño de la letra */}
+      <main className='flex-1 flex flex-col h-full w-full'> {/* Añadido w-full */}
+        <header className='bg-[#DBECFE] shadow-md p-8 flex justify-between items-center w-full'> {/* Añadido w-full */}
+          <h1 className='text-2xl font-bold'>{selectedOption}</h1>
         </header>
-        <div className='p-4 flex-1 bg-[#DBECFE] flex justify-center items-start'>
+        <div className='p-4 flex-1 bg-[#DBECFE] flex justify-center items-start w-full'> {/* Añadido w-full */}
           <div className="bg-[white] w-full h-full p-8 rounded-lg shadow-lg overflow-auto">
             {renderContent()}
           </div>
